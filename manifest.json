@@ -1,0 +1,8 @@
+{
+  "name": "Portföy Takip",
+  "short_name": "Portföy",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0a0f1c",
+  "theme_color": "#0a0f1c"
+}

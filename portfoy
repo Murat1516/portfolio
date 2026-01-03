@@ -1,0 +1,1679 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Portföy Takip</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-card: #1a1a25;
+            --bg-input: #22222f;
+            --text-primary: #f0f0f5;
+            --text-secondary: #8888a0;
+            --accent: #00d4aa;
+            --accent-glow: rgba(0, 212, 170, 0.3);
+            --profit: #00d4aa;
+            --loss: #ff4466;
+            --gold: #ffd700;
+            --silver: #c0c0c0;
+            --border: rgba(255,255,255,0.08);
+            --shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+
+        .light {
+            --bg-primary: #f5f5fa;
+            --bg-secondary: #ffffff;
+            --bg-card: #ffffff;
+            --bg-input: #eeeef5;
+            --text-primary: #1a1a2e;
+            --text-secondary: #666680;
+            --border: rgba(0,0,0,0.08);
+            --shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .app-container {
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 16px;
+            padding-bottom: 100px;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding: 8px 0;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--accent), #00a080);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: #000;
+            box-shadow: 0 4px 20px var(--accent-glow);
+        }
+
+        .logo-text {
+            font-size: 22px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent), #00ffcc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .icon-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .icon-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        /* Summary Cards */
+        .summary-section {
+            margin-bottom: 28px;
+        }
+
+        .total-card {
+            background: linear-gradient(135deg, var(--bg-card), var(--bg-secondary));
+            border-radius: 20px;
+            padding: 24px;
+            border: 1px solid var(--border);
+            margin-bottom: 16px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .total-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 150px;
+            height: 150px;
+            background: radial-gradient(circle, var(--accent-glow), transparent);
+            opacity: 0.5;
+        }
+
+        .total-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .total-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .total-change {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .total-change.profit {
+            background: rgba(0, 212, 170, 0.15);
+            color: var(--profit);
+        }
+
+        .total-change.loss {
+            background: rgba(255, 68, 102, 0.15);
+            color: var(--loss);
+        }
+
+        /* Category Pills */
+        .category-scroll {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .category-scroll::-webkit-scrollbar {
+            display: none;
+        }
+
+        .category-pill {
+            flex-shrink: 0;
+            padding: 10px 16px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .category-pill.active {
+            background: var(--accent);
+            color: #000;
+            border-color: var(--accent);
+        }
+
+        .category-pill i {
+            font-size: 14px;
+        }
+
+        /* Portfolio List */
+        .portfolio-section {
+            margin-bottom: 24px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .asset-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .asset-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 16px;
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .asset-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+
+        .asset-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .asset-icon.bist { background: linear-gradient(135deg, #ff6b6b, #ee5a5a); color: #fff; }
+        .asset-icon.us { background: linear-gradient(135deg, #4facfe, #00f2fe); color: #fff; }
+        .asset-icon.etf { background: linear-gradient(135deg, #a855f7, #7c3aed); color: #fff; }
+        .asset-icon.viop { background: linear-gradient(135deg, #f97316, #ea580c); color: #fff; }
+        .asset-icon.gold { background: linear-gradient(135deg, #ffd700, #ffb347); color: #000; }
+        .asset-icon.silver { background: linear-gradient(135deg, #c0c0c0, #a8a8a8); color: #000; }
+        .asset-icon.deposit { background: linear-gradient(135deg, #22c55e, #16a34a); color: #fff; }
+        .asset-icon.cash { background: linear-gradient(135deg, #64748b, #475569); color: #fff; }
+
+        .asset-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .asset-name {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .asset-details {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .asset-values {
+            text-align: right;
+        }
+
+        .asset-total {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .asset-change {
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .asset-change.profit { color: var(--profit); }
+        .asset-change.loss { color: var(--loss); }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .empty-state p {
+            font-size: 14px;
+        }
+
+        /* Bottom Nav */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border);
+            padding: 12px 20px;
+            padding-bottom: max(12px, env(safe-area-inset-bottom));
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            z-index: 100;
+        }
+
+        .nav-btn {
+            flex: 1;
+            max-width: 120px;
+            padding: 12px 20px;
+            border-radius: 14px;
+            border: none;
+            background: var(--bg-input);
+            color: var(--text-secondary);
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .nav-btn.primary {
+            background: var(--accent);
+            color: #000;
+            font-weight: 600;
+        }
+
+        .nav-btn:hover {
+            transform: scale(1.02);
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(8px);
+            display: none;
+            align-items: flex-end;
+            justify-content: center;
+            z-index: 200;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--bg-secondary);
+            border-radius: 24px 24px 0 0;
+            width: 100%;
+            max-width: 480px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(100%);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            background: var(--bg-secondary);
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            border: none;
+            background: var(--bg-input);
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .modal-close:hover {
+            background: var(--loss);
+            color: #fff;
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 14px 16px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: var(--bg-input);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 16px;
+            transition: all 0.2s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        .form-input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        /* Search Results */
+        .search-container {
+            position: relative;
+        }
+
+        .search-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin-top: 4px;
+            max-height: 240px;
+            overflow-y: auto;
+            z-index: 10;
+            display: none;
+        }
+
+        .search-results.active {
+            display: block;
+        }
+
+        .search-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: background 0.2s;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .search-item:last-child {
+            border-bottom: none;
+        }
+
+        .search-item:hover {
+            background: var(--bg-input);
+        }
+
+        .search-item-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .search-item-info {
+            flex: 1;
+        }
+
+        .search-item-symbol {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .search-item-name {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* Type Selector */
+        .type-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .type-btn {
+            padding: 14px 8px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: var(--bg-input);
+            color: var(--text-secondary);
+            font-family: inherit;
+            font-size: 11px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .type-btn i {
+            font-size: 18px;
+        }
+
+        .type-btn.active {
+            background: var(--accent);
+            color: #000;
+            border-color: var(--accent);
+        }
+
+        /* Submit Button */
+        .submit-btn {
+            width: 100%;
+            padding: 16px;
+            border-radius: 14px;
+            border: none;
+            background: var(--accent);
+            color: #000;
+            font-family: inherit;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .submit-btn:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 24px var(--accent-glow);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Delete Button */
+        .delete-btn {
+            width: 100%;
+            padding: 14px;
+            border-radius: 14px;
+            border: 1px solid var(--loss);
+            background: transparent;
+            color: var(--loss);
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-top: 12px;
+            transition: all 0.2s;
+        }
+
+        .delete-btn:hover {
+            background: var(--loss);
+            color: #fff;
+        }
+
+        /* Confirm Modal */
+        .confirm-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 300;
+            padding: 20px;
+        }
+
+        .confirm-modal.active {
+            display: flex;
+        }
+
+        .confirm-box {
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            padding: 28px;
+            max-width: 340px;
+            width: 100%;
+            text-align: center;
+            animation: scaleIn 0.2s ease-out;
+        }
+
+        @keyframes scaleIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .confirm-box h3 {
+            margin-bottom: 12px;
+            font-size: 18px;
+        }
+
+        .confirm-box p {
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+            font-size: 14px;
+        }
+
+        .confirm-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .confirm-actions button {
+            flex: 1;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .confirm-cancel {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+        }
+
+        .confirm-delete {
+            background: var(--loss);
+            border: none;
+            color: #fff;
+        }
+
+        /* Price Update Indicator */
+        .price-updating {
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Last Update */
+        .last-update {
+            text-align: center;
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 20px;
+            padding: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .last-update i {
+            color: var(--accent);
+        }
+
+        /* Custom Alert */
+        .custom-alert {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px 24px;
+            z-index: 400;
+            display: none;
+            align-items: center;
+            gap: 12px;
+            box-shadow: var(--shadow);
+            animation: alertIn 0.3s ease-out;
+        }
+
+        .custom-alert.active {
+            display: flex;
+        }
+
+        @keyframes alertIn {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+
+        .custom-alert.success i { color: var(--profit); }
+        .custom-alert.error i { color: var(--loss); }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">
+                <div class="logo-icon"><i class="fas fa-chart-pie"></i></div>
+                <span class="logo-text">Portföy</span>
+            </div>
+            <div class="header-actions">
+                <button class="icon-btn" onclick="toggleTheme()" title="Tema Değiştir">
+                    <i class="fas fa-moon" id="themeIcon"></i>
+                </button>
+                <button class="icon-btn" onclick="refreshPrices()" title="Fiyatları Güncelle">
+                    <i class="fas fa-sync-alt" id="refreshIcon"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Summary -->
+        <div class="summary-section">
+            <div class="total-card">
+                <div class="total-label">Toplam Portföy Değeri</div>
+                <div class="total-value" id="totalValue">₺0,00</div>
+                <div class="total-change profit" id="totalChange">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>₺0,00 (0.00%)</span>
+                </div>
+            </div>
+
+            <!-- Category Filter -->
+            <div class="category-scroll">
+                <button class="category-pill active" data-category="all" onclick="filterCategory('all')">
+                    <i class="fas fa-layer-group"></i> Tümü
+                </button>
+                <button class="category-pill" data-category="bist" onclick="filterCategory('bist')">
+                    <i class="fas fa-flag"></i> BIST
+                </button>
+                <button class="category-pill" data-category="us" onclick="filterCategory('us')">
+                    <i class="fas fa-dollar-sign"></i> ABD
+                </button>
+                <button class="category-pill" data-category="etf" onclick="filterCategory('etf')">
+                    <i class="fas fa-cubes"></i> ETF
+                </button>
+                <button class="category-pill" data-category="viop" onclick="filterCategory('viop')">
+                    <i class="fas fa-chart-line"></i> VİOP
+                </button>
+                <button class="category-pill" data-category="gold" onclick="filterCategory('gold')">
+                    <i class="fas fa-coins"></i> Altın
+                </button>
+                <button class="category-pill" data-category="silver" onclick="filterCategory('silver')">
+                    <i class="fas fa-ring"></i> Gümüş
+                </button>
+                <button class="category-pill" data-category="deposit" onclick="filterCategory('deposit')">
+                    <i class="fas fa-piggy-bank"></i> Faiz
+                </button>
+                <button class="category-pill" data-category="cash" onclick="filterCategory('cash')">
+                    <i class="fas fa-money-bill-wave"></i> Nakit
+                </button>
+            </div>
+        </div>
+
+        <!-- Portfolio List -->
+        <div class="portfolio-section">
+            <div class="section-header">
+                <h2 class="section-title">Varlıklarım</h2>
+            </div>
+            <div class="asset-list" id="assetList">
+                <div class="empty-state" id="emptyState">
+                    <i class="fas fa-wallet"></i>
+                    <p>Henüz varlık eklenmedi.<br>Başlamak için "Varlık Ekle" butonuna tıklayın.</p>
+                </div>
+            </div>
+            <div class="last-update" id="lastUpdate" style="display: none;">
+                <i class="fas fa-clock"></i>
+                <span>Son güncelleme: --:--</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <div class="bottom-nav">
+        <button class="nav-btn" onclick="exportData()">
+            <i class="fas fa-download"></i> Dışa Aktar
+        </button>
+        <button class="nav-btn primary" onclick="openAddModal()">
+            <i class="fas fa-plus"></i> Varlık Ekle
+        </button>
+    </div>
+
+    <!-- Add/Edit Modal -->
+    <div class="modal-overlay" id="addModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modalTitle">Varlık Ekle</h3>
+                <button class="modal-close" onclick="closeAddModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- Asset Type Selection -->
+                <div class="form-group">
+                    <label class="form-label">Varlık Tipi</label>
+                    <div class="type-grid">
+                        <button type="button" class="type-btn active" data-type="bist" onclick="selectType('bist')">
+                            <i class="fas fa-flag"></i>
+                            BIST
+                        </button>
+                        <button type="button" class="type-btn" data-type="us" onclick="selectType('us')">
+                            <i class="fas fa-dollar-sign"></i>
+                            ABD
+                        </button>
+                        <button type="button" class="type-btn" data-type="etf" onclick="selectType('etf')">
+                            <i class="fas fa-cubes"></i>
+                            ETF
+                        </button>
+                        <button type="button" class="type-btn" data-type="viop" onclick="selectType('viop')">
+                            <i class="fas fa-chart-line"></i>
+                            VİOP
+                        </button>
+                        <button type="button" class="type-btn" data-type="gold" onclick="selectType('gold')">
+                            <i class="fas fa-coins"></i>
+                            Altın
+                        </button>
+                        <button type="button" class="type-btn" data-type="silver" onclick="selectType('silver')">
+                            <i class="fas fa-ring"></i>
+                            Gümüş
+                        </button>
+                        <button type="button" class="type-btn" data-type="deposit" onclick="selectType('deposit')">
+                            <i class="fas fa-piggy-bank"></i>
+                            Faiz
+                        </button>
+                        <button type="button" class="type-btn" data-type="cash" onclick="selectType('cash')">
+                            <i class="fas fa-money-bill-wave"></i>
+                            Nakit
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Search/Select Asset -->
+                <div class="form-group" id="searchGroup">
+                    <label class="form-label">Varlık Ara</label>
+                    <div class="search-container">
+                        <input type="text" class="form-input" id="searchInput" placeholder="Sembol veya isim yazın... (örn: THYAO, Apple)" autocomplete="off">
+                        <div class="search-results" id="searchResults"></div>
+                    </div>
+                </div>
+
+                <!-- Selected Asset Display -->
+                <div class="form-group" id="selectedAssetGroup" style="display: none;">
+                    <label class="form-label">Seçilen Varlık</label>
+                    <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--bg-input); border-radius: 12px;">
+                        <div class="asset-icon" id="selectedIcon" style="width: 40px; height: 40px; font-size: 14px;"></div>
+                        <div>
+                            <div id="selectedSymbol" style="font-weight: 600;"></div>
+                            <div id="selectedName" style="font-size: 12px; color: var(--text-secondary);"></div>
+                        </div>
+                        <button type="button" onclick="clearSelection()" style="margin-left: auto; background: none; border: none; color: var(--text-secondary); cursor: pointer;">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Amount -->
+                <div class="form-group">
+                    <label class="form-label" id="amountLabel">Adet</label>
+                    <input type="number" class="form-input" id="amountInput" placeholder="0" step="any" min="0">
+                </div>
+
+                <!-- Buy Price -->
+                <div class="form-group" id="buyPriceGroup">
+                    <label class="form-label" id="buyPriceLabel">Alış Fiyatı (₺)</label>
+                    <input type="number" class="form-input" id="buyPriceInput" placeholder="0.00" step="any" min="0">
+                </div>
+
+                <!-- Current Price (for manual types) -->
+                <div class="form-group" id="currentPriceGroup" style="display: none;">
+                    <label class="form-label">Güncel Değer (₺)</label>
+                    <input type="number" class="form-input" id="currentPriceInput" placeholder="0.00" step="any" min="0">
+                </div>
+
+                <!-- Interest Rate (for deposit) -->
+                <div class="form-group" id="interestGroup" style="display: none;">
+                    <label class="form-label">Faiz Oranı (%)</label>
+                    <input type="number" class="form-input" id="interestInput" placeholder="45" step="any" min="0">
+                </div>
+
+                <button type="button" class="submit-btn" id="submitBtn" onclick="saveAsset()">
+                    <i class="fas fa-plus"></i> Ekle
+                </button>
+                <button type="button" class="delete-btn" id="deleteBtn" style="display: none;" onclick="confirmDelete()">
+                    <i class="fas fa-trash"></i> Varlığı Sil
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Delete Modal -->
+    <div class="confirm-modal" id="confirmModal">
+        <div class="confirm-box">
+            <h3>Varlığı Sil</h3>
+            <p>Bu varlığı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.</p>
+            <div class="confirm-actions">
+                <button class="confirm-cancel" onclick="closeConfirmModal()">İptal</button>
+                <button class="confirm-delete" onclick="deleteAsset()">Sil</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Alert -->
+    <div class="custom-alert" id="customAlert">
+        <i class="fas fa-check-circle"></i>
+        <span id="alertText">İşlem başarılı!</span>
+    </div>
+
+    <script>
+        // ========== DATA ==========
+        const ASSETS_DATA = {
+            bist: [
+                { symbol: 'THYAO', name: 'Türk Hava Yolları', price: 317.50 },
+                { symbol: 'GARAN', name: 'Garanti Bankası', price: 125.40 },
+                { symbol: 'AKBNK', name: 'Akbank', price: 68.75 },
+                { symbol: 'EREGL', name: 'Ereğli Demir Çelik', price: 58.90 },
+                { symbol: 'KCHOL', name: 'Koç Holding', price: 198.25 },
+                { symbol: 'SAHOL', name: 'Sabancı Holding', price: 95.60 },
+                { symbol: 'TUPRS', name: 'Tüpraş', price: 185.30 },
+                { symbol: 'SISE', name: 'Şişe Cam', price: 52.45 },
+                { symbol: 'ASELS', name: 'Aselsan', price: 72.80 },
+                { symbol: 'BIMAS', name: 'BİM Mağazalar', price: 420.00 },
+                { symbol: 'FROTO', name: 'Ford Otosan', price: 1250.00 },
+                { symbol: 'TOASO', name: 'Tofaş Otomobil', price: 285.50 },
+                { symbol: 'TCELL', name: 'Turkcell', price: 98.75 },
+                { symbol: 'PETKM', name: 'Petkim', price: 28.40 },
+                { symbol: 'TAVHL', name: 'TAV Havalimanları', price: 145.60 },
+                { symbol: 'YKBNK', name: 'Yapı Kredi Bankası', price: 32.85 },
+                { symbol: 'HALKB', name: 'Halk Bankası', price: 22.45 },
+                { symbol: 'VAKBN', name: 'Vakıfbank', price: 24.60 },
+                { symbol: 'ISCTR', name: 'İş Bankası C', price: 18.95 },
+                { symbol: 'KOZAL', name: 'Koza Altın', price: 185.70 },
+                { symbol: 'KOZAA', name: 'Koza Anadolu Metal', price: 62.35 },
+                { symbol: 'EKGYO', name: 'Emlak Konut GYO', price: 12.85 },
+                { symbol: 'ENKAI', name: 'Enka İnşaat', price: 68.90 },
+                { symbol: 'DOHOL', name: 'Doğan Holding', price: 28.45 },
+                { symbol: 'VESTL', name: 'Vestel Elektronik', price: 42.60 },
+                { symbol: 'ARCLK', name: 'Arçelik', price: 185.40 },
+                { symbol: 'TTKOM', name: 'Türk Telekom', price: 58.25 },
+                { symbol: 'GUBRF', name: 'Gübre Fabrikaları', price: 215.80 },
+                { symbol: 'SASA', name: 'Sasa Polyester', price: 85.60 },
+                { symbol: 'OYAKC', name: 'Oyak Çimento', price: 52.40 }
+            ],
+            us: [
+                { symbol: 'AAPL', name: 'Apple Inc.', price: 195.50 },
+                { symbol: 'MSFT', name: 'Microsoft Corp.', price: 415.80 },
+                { symbol: 'GOOGL', name: 'Alphabet Inc.', price: 175.25 },
+                { symbol: 'AMZN', name: 'Amazon.com Inc.', price: 185.60 },
+                { symbol: 'NVDA', name: 'NVIDIA Corp.', price: 875.40 },
+                { symbol: 'TSLA', name: 'Tesla Inc.', price: 248.90 },
+                { symbol: 'META', name: 'Meta Platforms', price: 505.75 },
+                { symbol: 'BRK.B', name: 'Berkshire Hathaway', price: 412.30 },
+                { symbol: 'JPM', name: 'JPMorgan Chase', price: 198.45 },
+                { symbol: 'V', name: 'Visa Inc.', price: 285.60 },
+                { symbol: 'JNJ', name: 'Johnson & Johnson', price: 158.25 },
+                { symbol: 'WMT', name: 'Walmart Inc.', price: 165.80 },
+                { symbol: 'PG', name: 'Procter & Gamble', price: 162.45 },
+                { symbol: 'MA', name: 'Mastercard Inc.', price: 458.90 },
+                { symbol: 'HD', name: 'Home Depot', price: 385.60 },
+                { symbol: 'DIS', name: 'Walt Disney Co.', price: 112.40 },
+                { symbol: 'NFLX', name: 'Netflix Inc.', price: 485.75 },
+                { symbol: 'ADBE', name: 'Adobe Inc.', price: 585.30 },
+                { symbol: 'CRM', name: 'Salesforce Inc.', price: 265.80 },
+                { symbol: 'AMD', name: 'Advanced Micro Devices', price: 165.45 },
+                { symbol: 'INTC', name: 'Intel Corp.', price: 42.85 },
+                { symbol: 'CSCO', name: 'Cisco Systems', price: 52.60 },
+                { symbol: 'PEP', name: 'PepsiCo Inc.', price: 172.35 },
+                { symbol: 'KO', name: 'Coca-Cola Co.', price: 62.80 },
+                { symbol: 'NKE', name: 'Nike Inc.', price: 108.45 },
+                { symbol: 'MCD', name: 'McDonalds Corp.', price: 295.60 },
+                { symbol: 'BA', name: 'Boeing Co.', price: 215.80 },
+                { symbol: 'GS', name: 'Goldman Sachs', price: 485.40 },
+                { symbol: 'CAT', name: 'Caterpillar Inc.', price: 325.75 },
+                { symbol: 'XOM', name: 'Exxon Mobil', price: 108.90 }
+            ],
+            etf: [
+                { symbol: 'SPY', name: 'SPDR S&P 500 ETF', price: 485.60 },
+                { symbol: 'QQQ', name: 'Invesco QQQ Trust', price: 425.80 },
+                { symbol: 'VTI', name: 'Vanguard Total Stock', price: 265.45 },
+                { symbol: 'IVV', name: 'iShares Core S&P 500', price: 488.30 },
+                { symbol: 'VOO', name: 'Vanguard S&P 500', price: 445.75 },
+                { symbol: 'VEA', name: 'Vanguard FTSE Developed', price: 48.60 },
+                { symbol: 'VWO', name: 'Vanguard FTSE Emerging', price: 42.85 },
+                { symbol: 'AGG', name: 'iShares Core US Aggregate', price: 98.45 },
+                { symbol: 'BND', name: 'Vanguard Total Bond', price: 72.60 },
+                { symbol: 'GLD', name: 'SPDR Gold Shares', price: 225.80 },
+                { symbol: 'SLV', name: 'iShares Silver Trust', price: 24.65 },
+                { symbol: 'ARKK', name: 'ARK Innovation ETF', price: 52.40 },
+                { symbol: 'XLF', name: 'Financial Select SPDR', price: 42.85 },
+                { symbol: 'XLE', name: 'Energy Select SPDR', price: 88.60 },
+                { symbol: 'XLK', name: 'Technology Select SPDR', price: 195.45 },
+                { symbol: 'VNQ', name: 'Vanguard Real Estate', price: 85.30 },
+                { symbol: 'DIA', name: 'SPDR Dow Jones Industrial', price: 385.60 },
+                { symbol: 'IWM', name: 'iShares Russell 2000', price: 205.45 },
+                { symbol: 'EEM', name: 'iShares MSCI Emerging', price: 42.80 },
+                { symbol: 'TLT', name: 'iShares 20+ Year Treasury', price: 92.60 }
+            ],
+            viop: [
+                { symbol: 'F_XU030', name: 'BIST 30 Vadeli', price: 9850 },
+                { symbol: 'F_XU100', name: 'BIST 100 Vadeli', price: 10250 },
+                { symbol: 'F_USDTRY', name: 'Dolar/TL Vadeli', price: 34.25 },
+                { symbol: 'F_EURTRY', name: 'Euro/TL Vadeli', price: 37.45 },
+                { symbol: 'F_XAUTRY', name: 'Altın/TL Vadeli', price: 2850 },
+                { symbol: 'F_THYAO', name: 'THY Vadeli', price: 318.50 },
+                { symbol: 'F_GARAN', name: 'Garanti Vadeli', price: 126.20 },
+                { symbol: 'F_AKBNK', name: 'Akbank Vadeli', price: 69.40 },
+                { symbol: 'F_EREGL', name: 'Ereğli Vadeli', price: 59.25 },
+                { symbol: 'F_KCHOL', name: 'Koç Holding Vadeli', price: 199.80 }
+            ],
+            gold: [
+                { symbol: 'XAU', name: 'Gram Altın', price: 2845.50 },
+                { symbol: 'GAU', name: 'Çeyrek Altın', price: 4650.00 },
+                { symbol: 'HAU', name: 'Yarım Altın', price: 9280.00 },
+                { symbol: 'TAU', name: 'Tam Altın', price: 18520.00 },
+                { symbol: 'CAU', name: 'Cumhuriyet Altını', price: 19150.00 },
+                { symbol: 'AAU', name: 'Ata Altın', price: 19250.00 },
+                { symbol: 'RAU', name: 'Reşat Altın', price: 20150.00 },
+                { symbol: 'XAUUSD', name: 'Ons Altın (USD)', price: 2385.60 }
+            ],
+            silver: [
+                { symbol: 'XAG', name: 'Gram Gümüş', price: 35.80 },
+                { symbol: 'XAGUSD', name: 'Ons Gümüş (USD)', price: 28.45 }
+            ],
+            deposit: [
+                { symbol: 'TL_VADELI', name: 'TL Vadeli Mevduat', price: 1, isManual: true },
+                { symbol: 'USD_VADELI', name: 'USD Vadeli Mevduat', price: 1, isManual: true },
+                { symbol: 'EUR_VADELI', name: 'EUR Vadeli Mevduat', price: 1, isManual: true }
+            ],
+            cash: [
+                { symbol: 'TRY', name: 'Türk Lirası', price: 1, isManual: true },
+                { symbol: 'USD', name: 'Amerikan Doları', price: 34.25, isManual: true },
+                { symbol: 'EUR', name: 'Euro', price: 37.45, isManual: true },
+                { symbol: 'GBP', name: 'İngiliz Sterlini', price: 43.85, isManual: true }
+            ]
+        };
+
+        const USD_TRY = 34.25;
+
+        // ========== STATE ==========
+        let portfolio = [];
+        let currentCategory = 'all';
+        let selectedType = 'bist';
+        let selectedAsset = null;
+        let editingId = null;
+        let priceUpdateInterval = null;
+
+        // ========== INIT ==========
+        function init() {
+            initTheme();
+            loadPortfolio();
+            renderPortfolio();
+            updateSummary();
+            startPriceUpdates();
+        }
+
+        function initTheme() {
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+                document.documentElement.classList.add('light');
+                document.getElementById('themeIcon').className = 'fas fa-sun';
+            }
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+                if (event.matches) {
+                    document.documentElement.classList.remove('light');
+                    document.getElementById('themeIcon').className = 'fas fa-moon';
+                } else {
+                    document.documentElement.classList.add('light');
+                    document.getElementById('themeIcon').className = 'fas fa-sun';
+                }
+            });
+        }
+
+        function toggleTheme() {
+            document.documentElement.classList.toggle('light');
+            const icon = document.getElementById('themeIcon');
+            icon.className = document.documentElement.classList.contains('light') ? 'fas fa-sun' : 'fas fa-moon';
+        }
+
+        // ========== STORAGE (In-Memory) ==========
+        // Note: localStorage is not available in iframe, using in-memory storage
+        // Data persists only during the session
+        function loadPortfolio() {
+            // Portfolio is already initialized as empty array
+            // In production, you could use an API to persist data
+        }
+
+        function savePortfolio() {
+            // Data is kept in memory (portfolio array)
+            // In production, you could save to an API/backend
+        }
+
+        // ========== PRICE UPDATES ==========
+        function startPriceUpdates() {
+            updatePrices();
+            priceUpdateInterval = setInterval(updatePrices, 30000);
+        }
+
+        function updatePrices() {
+            portfolio.forEach(asset => {
+                if (asset.type !== 'deposit' && asset.type !== 'cash') {
+                    const assetData = ASSETS_DATA[asset.type]?.find(a => a.symbol === asset.symbol);
+                    if (assetData && !assetData.isManual) {
+                        const change = (Math.random() - 0.5) * 0.02;
+                        assetData.price = assetData.price * (1 + change);
+                        asset.currentPrice = assetData.price;
+                    }
+                }
+            });
+            renderPortfolio();
+            updateSummary();
+            updateLastUpdateTime();
+        }
+
+        function refreshPrices() {
+            const icon = document.getElementById('refreshIcon');
+            icon.style.animation = 'spin 1s linear infinite';
+
+            setTimeout(() => {
+                updatePrices();
+                icon.style.animation = '';
+                showAlert('Fiyatlar güncellendi!', 'success');
+            }, 800);
+        }
+
+        function updateLastUpdateTime() {
+            const el = document.getElementById('lastUpdate');
+            if (portfolio.length > 0) {
+                el.style.display = 'flex';
+                const now = new Date();
+                el.querySelector('span').textContent = `Son güncelleme: ${now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}`;
+            } else {
+                el.style.display = 'none';
+            }
+        }
+
+        // ========== RENDER ==========
+        function renderPortfolio() {
+            const list = document.getElementById('assetList');
+            const empty = document.getElementById('emptyState');
+
+            let filtered = portfolio;
+            if (currentCategory !== 'all') {
+                filtered = portfolio.filter(a => a.type === currentCategory);
+            }
+
+            if (filtered.length === 0) {
+                list.innerHTML = '';
+                list.appendChild(empty);
+                empty.style.display = 'block';
+                return;
+            }
+
+            empty.style.display = 'none';
+            list.innerHTML = filtered.map((asset, index) => {
+                const totalValue = calculateAssetValue(asset);
+                const totalCost = asset.amount * asset.buyPrice;
+                const profit = totalValue - totalCost;
+                const profitPercent = totalCost > 0 ? (profit / totalCost) * 100 : 0;
+                const isProfitable = profit >= 0;
+
+                return `
+                    <div class="asset-card" onclick="editAsset('${asset.id}')" style="animation-delay: ${index * 0.05}s">
+                        <div class="asset-icon ${asset.type}">${getAssetIconLetter(asset)}</div>
+                        <div class="asset-info">
+                            <div class="asset-name">${asset.name}</div>
+                            <div class="asset-details">${asset.symbol} • ${formatNumber(asset.amount)} adet</div>
+                        </div>
+                        <div class="asset-values">
+                            <div class="asset-total">${formatCurrency(totalValue)}</div>
+                            <div class="asset-change ${isProfitable ? 'profit' : 'loss'}">
+                                <i class="fas fa-${isProfitable ? 'arrow-up' : 'arrow-down'}"></i>
+                                ${isProfitable ? '+' : ''}${formatCurrency(profit)} (${profitPercent >= 0 ? '+' : ''}${profitPercent.toFixed(2)}%)
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function getAssetIconLetter(asset) {
+            if (asset.type === 'gold') return '<i class="fas fa-coins"></i>';
+            if (asset.type === 'silver') return '<i class="fas fa-ring"></i>';
+            if (asset.type === 'deposit') return '<i class="fas fa-piggy-bank"></i>';
+            if (asset.type === 'cash') return asset.symbol;
+            return asset.symbol.substring(0, 2);
+        }
+
+        function calculateAssetValue(asset) {
+            if (asset.type === 'deposit') {
+                return asset.currentPrice || (asset.amount * asset.buyPrice);
+            }
+            if (asset.type === 'cash') {
+                if (asset.symbol === 'TRY') return asset.amount;
+                return asset.amount * asset.currentPrice;
+            }
+            if (asset.type === 'us' || asset.type === 'etf') {
+                return asset.amount * asset.currentPrice * USD_TRY;
+            }
+            return asset.amount * asset.currentPrice;
+        }
+
+        function updateSummary() {
+            let totalValue = 0;
+            let totalCost = 0;
+
+            portfolio.forEach(asset => {
+                totalValue += calculateAssetValue(asset);
+                if (asset.type === 'us' || asset.type === 'etf') {
+                    totalCost += asset.amount * asset.buyPrice * USD_TRY;
+                } else if (asset.type === 'cash' && asset.symbol !== 'TRY') {
+                    totalCost += asset.amount * asset.buyPrice;
+                } else {
+                    totalCost += asset.amount * asset.buyPrice;
+                }
+            });
+
+            const profit = totalValue - totalCost;
+            const profitPercent = totalCost > 0 ? (profit / totalCost) * 100 : 0;
+            const isProfitable = profit >= 0;
+
+            document.getElementById('totalValue').textContent = formatCurrency(totalValue);
+
+            const changeEl = document.getElementById('totalChange');
+            changeEl.className = `total-change ${isProfitable ? 'profit' : 'loss'}`;
+            changeEl.innerHTML = `
+                <i class="fas fa-arrow-${isProfitable ? 'up' : 'down'}"></i>
+                <span>${isProfitable ? '+' : ''}${formatCurrency(profit)} (${profitPercent >= 0 ? '+' : ''}${profitPercent.toFixed(2)}%)</span>
+            `;
+        }
+
+        // ========== CATEGORY FILTER ==========
+        function filterCategory(category) {
+            currentCategory = category;
+            document.querySelectorAll('.category-pill').forEach(pill => {
+                pill.classList.toggle('active', pill.dataset.category === category);
+            });
+            renderPortfolio();
+        }
+
+        // ========== MODAL ==========
+        function openAddModal() {
+            editingId = null;
+            selectedAsset = null;
+            selectedType = 'bist';
+
+            document.getElementById('modalTitle').textContent = 'Varlık Ekle';
+            document.getElementById('submitBtn').innerHTML = '<i class="fas fa-plus"></i> Ekle';
+            document.getElementById('deleteBtn').style.display = 'none';
+
+            resetForm();
+            updateFormForType();
+            document.getElementById('addModal').classList.add('active');
+        }
+
+        function closeAddModal() {
+            document.getElementById('addModal').classList.remove('active');
+            resetForm();
+        }
+
+        function resetForm() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('amountInput').value = '';
+            document.getElementById('buyPriceInput').value = '';
+            document.getElementById('currentPriceInput').value = '';
+            document.getElementById('interestInput').value = '';
+            document.getElementById('searchResults').classList.remove('active');
+            document.getElementById('selectedAssetGroup').style.display = 'none';
+            document.getElementById('searchGroup').style.display = 'block';
+            selectedAsset = null;
+
+            document.querySelectorAll('.type-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.type === 'bist');
+            });
+            selectedType = 'bist';
+        }
+
+        function selectType(type) {
+            selectedType = type;
+            selectedAsset = null;
+
+            document.querySelectorAll('.type-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.type === type);
+            });
+
+            document.getElementById('searchInput').value = '';
+            document.getElementById('searchResults').classList.remove('active');
+            document.getElementById('selectedAssetGroup').style.display = 'none';
+            document.getElementById('searchGroup').style.display = 'block';
+
+            updateFormForType();
+        }
+
+        function updateFormForType() {
+            const isDeposit = selectedType === 'deposit';
+            const isCash = selectedType === 'cash';
+
+            document.getElementById('interestGroup').style.display = isDeposit ? 'block' : 'none';
+            document.getElementById('currentPriceGroup').style.display = isDeposit ? 'block' : 'none';
+
+            if (isDeposit) {
+                document.getElementById('amountLabel').textContent = 'Anapara (₺)';
+                document.getElementById('buyPriceLabel').textContent = 'Yatırım Tarihi Değeri (₺)';
+                document.getElementById('buyPriceGroup').style.display = 'none';
+            } else if (isCash) {
+                document.getElementById('amountLabel').textContent = 'Miktar';
+                document.getElementById('buyPriceLabel').textContent = 'Alış Kuru (₺)';
+                document.getElementById('buyPriceGroup').style.display = 'block';
+            } else {
+                document.getElementById('amountLabel').textContent = 'Adet';
+                const currency = (selectedType === 'us' || selectedType === 'etf') ? '$' : '₺';
+                document.getElementById('buyPriceLabel').textContent = `Alış Fiyatı (${currency})`;
+                document.getElementById('buyPriceGroup').style.display = 'block';
+            }
+        }
+
+        // ========== SEARCH ==========
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            const query = e.target.value.toLowerCase().trim();
+            const results = document.getElementById('searchResults');
+
+            if (query.length < 1) {
+                results.classList.remove('active');
+                return;
+            }
+
+            const assets = ASSETS_DATA[selectedType] || [];
+            const filtered = assets.filter(a =>
+                a.symbol.toLowerCase().includes(query) ||
+                a.name.toLowerCase().includes(query)
+            ).slice(0, 8);
+
+            if (filtered.length === 0) {
+                results.innerHTML = '<div class="search-item"><div class="search-item-info"><div class="search-item-symbol">Sonuç bulunamadı</div></div></div>';
+            } else {
+                results.innerHTML = filtered.map(asset => `
+                    <div class="search-item" onclick="selectAsset('${asset.symbol}')">
+                        <div class="search-item-icon asset-icon ${selectedType}">${asset.symbol.substring(0, 2)}</div>
+                        <div class="search-item-info">
+                            <div class="search-item-symbol">${asset.symbol}</div>
+                            <div class="search-item-name">${asset.name}</div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            results.classList.add('active');
+        });
+
+        document.getElementById('searchInput').addEventListener('focus', function(e) {
+            if (e.target.value.length >= 1) {
+                document.getElementById('searchResults').classList.add('active');
+            }
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.search-container')) {
+                document.getElementById('searchResults').classList.remove('active');
+            }
+        });
+
+        function selectAsset(symbol) {
+            const assets = ASSETS_DATA[selectedType] || [];
+            const asset = assets.find(a => a.symbol === symbol);
+
+            if (asset) {
+                selectedAsset = asset;
+                document.getElementById('searchGroup').style.display = 'none';
+                document.getElementById('selectedAssetGroup').style.display = 'block';
+                document.getElementById('selectedIcon').className = `asset-icon ${selectedType}`;
+                document.getElementById('selectedIcon').innerHTML = symbol.substring(0, 2);
+                document.getElementById('selectedSymbol').textContent = symbol;
+                document.getElementById('selectedName').textContent = asset.name;
+                document.getElementById('searchResults').classList.remove('active');
+
+                if (selectedType !== 'deposit' && selectedType !== 'cash') {
+                    document.getElementById('buyPriceInput').value = asset.price.toFixed(2);
+                }
+            }
+        }
+
+        function clearSelection() {
+            selectedAsset = null;
+            document.getElementById('searchGroup').style.display = 'block';
+            document.getElementById('selectedAssetGroup').style.display = 'none';
+            document.getElementById('searchInput').value = '';
+            document.getElementById('buyPriceInput').value = '';
+        }
+
+        // ========== SAVE ASSET ==========
+        function saveAsset() {
+            if (!selectedAsset && selectedType !== 'deposit' && selectedType !== 'cash') {
+                showAlert('Lütfen bir varlık seçin!', 'error');
+                return;
+            }
+
+            const amount = parseFloat(document.getElementById('amountInput').value);
+            if (!amount || amount <= 0) {
+                showAlert('Lütfen geçerli bir miktar girin!', 'error');
+                return;
+            }
+
+            let buyPrice, currentPrice, interestRate;
+
+            if (selectedType === 'deposit') {
+                if (!selectedAsset) {
+                    selectedAsset = ASSETS_DATA.deposit[0];
+                }
+                buyPrice = amount;
+                currentPrice = parseFloat(document.getElementById('currentPriceInput').value) || amount;
+                interestRate = parseFloat(document.getElementById('interestInput').value) || 0;
+            } else {
+                buyPrice = parseFloat(document.getElementById('buyPriceInput').value);
+                if (!buyPrice || buyPrice <= 0) {
+                    showAlert('Lütfen geçerli bir fiyat girin!', 'error');
+                    return;
+                }
+                currentPrice = selectedAsset.price;
+            }
+
+            const assetData = {
+                id: editingId || Date.now().toString(),
+                type: selectedType,
+                symbol: selectedAsset.symbol,
+                name: selectedAsset.name,
+                amount: amount,
+                buyPrice: buyPrice,
+                currentPrice: currentPrice,
+                interestRate: interestRate || 0
+            };
+
+            if (editingId) {
+                const index = portfolio.findIndex(a => a.id === editingId);
+                if (index !== -1) {
+                    portfolio[index] = assetData;
+                }
+            } else {
+                portfolio.push(assetData);
+            }
+
+            savePortfolio();
+            renderPortfolio();
+            updateSummary();
+            updateLastUpdateTime();
+            closeAddModal();
+            showAlert(editingId ? 'Varlık güncellendi!' : 'Varlık eklendi!', 'success');
+        }
+
+        // ========== EDIT ASSET ==========
+        function editAsset(id) {
+            const asset = portfolio.find(a => a.id === id);
+            if (!asset) return;
+
+            editingId = id;
+            selectedType = asset.type;
+            selectedAsset = { symbol: asset.symbol, name: asset.name, price: asset.currentPrice };
+
+            document.getElementById('modalTitle').textContent = 'Varlığı Düzenle';
+            document.getElementById('submitBtn').innerHTML = '<i class="fas fa-save"></i> Kaydet';
+            document.getElementById('deleteBtn').style.display = 'block';
+
+            document.querySelectorAll('.type-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.type === asset.type);
+            });
+
+            updateFormForType();
+
+            document.getElementById('searchGroup').style.display = 'none';
+            document.getElementById('selectedAssetGroup').style.display = 'block';
+            document.getElementById('selectedIcon').className = `asset-icon ${asset.type}`;
+            document.getElementById('selectedIcon').innerHTML = getAssetIconLetter(asset);
+            document.getElementById('selectedSymbol').textContent = asset.symbol;
+            document.getElementById('selectedName').textContent = asset.name;
+
+            document.getElementById('amountInput').value = asset.amount;
+            document.getElementById('buyPriceInput').value = asset.buyPrice;
+
+            if (asset.type === 'deposit') {
+                document.getElementById('currentPriceInput').value = asset.currentPrice;
+                document.getElementById('interestInput').value = asset.interestRate || '';
+            }
+
+            document.getElementById('addModal').classList.add('active');
+        }
+
+        // ========== DELETE ASSET ==========
+        function confirmDelete() {
+            document.getElementById('confirmModal').classList.add('active');
+        }
+
+        function closeConfirmModal() {
+            document.getElementById('confirmModal').classList.remove('active');
+        }
+
+        function deleteAsset() {
+            if (editingId) {
+                portfolio = portfolio.filter(a => a.id !== editingId);
+                savePortfolio();
+                renderPortfolio();
+                updateSummary();
+                updateLastUpdateTime();
+            }
+            closeConfirmModal();
+            closeAddModal();
+            showAlert('Varlık silindi!', 'success');
+        }
+
+        // ========== EXPORT ==========
+        function exportData() {
+            if (portfolio.length === 0) {
+                showAlert('Dışa aktarılacak varlık yok!', 'error');
+                return;
+            }
+
+            let csv = 'Tip,Sembol,İsim,Adet,Alış Fiyatı,Güncel Fiyat,Toplam Değer,Kar/Zarar,Kar/Zarar %\n';
+
+            portfolio.forEach(asset => {
+                const totalValue = calculateAssetValue(asset);
+                const totalCost = asset.amount * asset.buyPrice;
+                const profit = totalValue - totalCost;
+                const profitPercent = totalCost > 0 ? (profit / totalCost) * 100 : 0;
+
+                csv += `${asset.type},${asset.symbol},"${asset.name}",${asset.amount},${asset.buyPrice},${asset.currentPrice},${totalValue.toFixed(2)},${profit.toFixed(2)},${profitPercent.toFixed(2)}%\n`;
+            });
+
+            const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `portfolio_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showAlert('Portföy dışa aktarıldı!', 'success');
+        }
+
+        // ========== UTILITIES ==========
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('tr-TR', {
+                style: 'currency',
+                currency: 'TRY',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(value);
+        }
+
+        function formatNumber(value) {
+            return new Intl.NumberFormat('tr-TR', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 4
+            }).format(value);
+        }
+
+        function showAlert(message, type) {
+            const alertEl = document.getElementById('customAlert');
+            const textEl = document.getElementById('alertText');
+            const iconEl = alertEl.querySelector('i');
+
+            textEl.textContent = message;
+            alertEl.className = `custom-alert ${type} active`;
+            iconEl.className = type === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-circle';
+
+            setTimeout(() => {
+                alertEl.classList.remove('active');
+            }, 2500);
+        }
+
+        // Add spin animation for refresh
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes spin {
+                from { transform: rotate(0deg); }
+                to { transform: rotate(360deg); }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Initialize
+        init();
+    </script>
+</body>
+</html>
